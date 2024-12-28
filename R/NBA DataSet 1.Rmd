@@ -1,0 +1,159 @@
+---
+title: "SAIRS NBA 1"
+author: "Wahome"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## NBA Dataset 1
+
+The goal of this analysis is to establish the following :
+
+1. Top 5 players with the highest points for the team LA clippers in the 2020-23 season.
+2. Check for the team's change in performance points over the seasons.
+3. Test for correlation between age and points scored by the players.
+
+```{r}
+
+#Loading the required libraries
+
+library(dplyr)
+library(ggplot2)
+
+```
+```{r}
+#Loading in DataSet 1
+
+df <- read.csv("C:\\Users\\USER\\Desktop\\SD DATA\\NBA\\DataSet 1.csv")
+
+head(df)
+
+```
+
+```{r}
+
+#Selecting the required columns for our analysis
+
+new.df <- select(df, player_name,team_abbreviation,age,gp,pts,ast,season)
+
+new.df
+
+```
+
+```{r}
+#updating the column names for better readability
+
+colnames(new.df) <-c('Player_Name','Team','Age','Games_Played','Points','Assists','Season')
+
+new.df
+
+```
+
+## Filtering the data
+
+Required team - LA Clippers - ABV - LAC
+Season - 2020-2023
+
+
+```{r}
+
+new.df %>% filter(Team == 'LAC', Season %in% c('2020-21','2021-22','2022-23'))
+
+```
+
+### We are left with 52 rows of data.
+
+```{r}
+#Filtered data to be stored in a new data frame for analysis
+
+cleaned.df <- new.df %>% filter(Team == 'LAC', Season %in% c('2020-21','2021-22','2022-23'))
+
+cleaned.df
+
+```
+
+```{r}
+#Analyzing the teams total points for each season.
+
+cleaned.df %>% group_by(Season) %>% summarise(Total_Points = sum(Points))
+
+Team <- cleaned.df %>% group_by(Season) %>% summarise(Total_Points = sum(Points))
+
+Team
+
+```
+
+```{r}
+#Checking for the top 5 players across the 3 seasons in terms of points.
+
+cleaned.df %>% group_by(Player_Name) %>% summarise(Total_Points = sum(Points))
+
+```
+
+
+```{r}
+#The result variable stores the summarized player points so as to make it easy to sort the data from the highest to lowest points.
+
+result <- cleaned.df %>% group_by(Player_Name) %>% summarise(Total_Points = sum(Points))
+
+arrange(result, desc(Total_Points))
+
+
+```
+
+## Top five players
+
+```{r}
+
+result <- arrange(result, desc(Total_Points))
+
+head(result,5)
+
+
+```
+
+
+## Including Plots
+
+```{r}
+#checking for correlation between age and points scored.
+
+ggplot(cleaned.df, aes(x=Age,y=Points)) + geom_point(color = 'blue') + ggtitle('Age vs Points Scored')
+
+```
+### From the above plot, it can be seen that older players 30+ appear to have more points.
+
+```{r}
+
+#Assigning the top five players in a variable for easier plotting.
+
+players <- head(result,5)
+
+players
+
+```
+
+
+```{r}
+#Plotting the top five players
+
+ggplot(players, aes(x=Player_Name,y=Total_Points)) + geom_col(width = 0.5, color='green', fill='#03396c') + ggtitle('Top Five Players') + xlab("") + ylab('Points')
+
+
+```
+
+```{r}
+#Team total points over the seasons.
+
+ggplot(Team, aes(x=Season,y=Total_Points)) + geom_col(width = 0.5, color='green', fill= '#03396c') + ggtitle('Team Total Points') + xlab("Season") + ylab('Points')
+
+```
+
+
+

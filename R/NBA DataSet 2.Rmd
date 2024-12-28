@@ -1,0 +1,113 @@
+---
+title: "NBA DataSet 2"
+author: "Wahome"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+The goal of this analysis is to establish the following :
+
+The increase or decline in the number of injuries for the last 10 years. 
+Analysis done for The NBA team,Celtics.
+
+
+```{r}
+
+#Loading the required libraries
+
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+
+```
+
+```{r}
+#Loading in DataSet 2
+
+df <- read.csv("C:\\Users\\USER\\Desktop\\SD DATA\\NBA\\DataSet 2.csv")
+
+df
+
+```
+```{r}
+#Formatting the date column from character to date data type and in the format ymd using the lubridate package.
+
+df$newDate <- mdy(df$Date)
+
+df
+
+
+```
+
+
+
+```{r}
+#Adding a new year column to capture year only from the newDate column.
+
+df$year <- year(mdy(df$Date))
+
+df
+
+```
+
+```{r}
+#Selecting the required columns for our analysis
+
+new.df <- select(df,newDate,year,Team,Acquired,Relinquished)
+
+new.df
+```
+
+```{r}
+#updating the column names for better readability
+#IL - Injury List
+
+colnames(new.df) <-c('Date','Year','Team','Removed from IL','Placed on IL')
+
+new.df
+
+```
+
+## Filtering the data
+
+Required team - Celtics
+Year  - 2014-2023 (10 years period)
+
+
+```{r}
+#Vector to hold the year values for the required period.
+
+year <- c(2014,2015,2016,2017,2018,2019,2020,2021,2022,2023)
+
+year
+```
+```{r}
+
+filter(new.df,Team == 'Celtics', Year %in% year)
+
+```
+
+```{r}
+#Cleaned data to be stored in a new data frame for analysis
+
+cleaned.df <- filter(new.df,Team == 'Celtics', Year %in% year)
+
+cleaned.df
+
+```
+
+```{r}
+#Analyzing the number of injuries each year
+
+cleaned.df %>% group_by(Year = year(Date)) %>% summarise(Injuries = (n=n()))
+
+```
+
+
+
