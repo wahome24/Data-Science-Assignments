@@ -1,0 +1,153 @@
+---
+title: "R code and report"
+author: Erastus
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Task 1: R 
+
+In this task you are asked to investigate the data in `scot_unintentional_injuries.csv` and `healthboards.csv`. 
+
+The Unintentional Injuries dataset from Public Health Scotland provides information on emergency hospital admissions as a result of unintentional injuries and assaults. You can find more [information abou t the unintentional injuries data set here, including a data dictionary](https://www.opendata.nhs.scot/dataset/unintentional-injuries/resource/aee43295-2a13-48f6-bf05-92769ca7c6cf) and [here for more information about the health boards dataset](https://www.opendata.nhs.scot/dataset/geography-codes-and-labels/resource/652ff726-e676-4a20-abda-435b98dd7bdc). Do not import the data via the URL, you must use the data files provided for this assignment. 
+
+Follow the steps below to ultimately answer the final questions with the data. 
+
+* load the necessary libraries and packages
+* read in the data
+* join the two data sets together
+* check the data types of the variables of interest and ensure they are they type you want them to be. If not, change them.
+* check for the content/information contained within your variables of interest and ensure you are satisfied
+with the presentation
+* check for and deal with any missing data, if deemed appropriate
+* check the data formats (wide vs long) and transform if it is not appropriate
+
+*Question:* **Across Scotland, what are the most and least common unintentional injuries for young people aged 5-14 in 2013/14 and 2022/23 to be admitted to the emergency hospital for? Did the rate of these injuries change between time periods?**
+
+```{r}
+#Loading libraries
+
+library(dplyr)
+
+```
+
+```{r}
+#Reading in the data
+
+#DataSet 1 - Unintentional Injuries
+
+injuries <- read.csv("C:\\Users\\USER\\Desktop\\R\\Assignments\\scot_unintentional_injuries.csv")
+
+injuries
+
+```
+
+```{r}
+#DataSet 2 - Health Boards
+
+hbs <- read.csv("C:\\Users\\USER\\Desktop\\R\\Assignments\\healthboards.csv")
+
+hbs
+
+```
+
+```{r}
+#Joining the two dataSets
+
+df <- injuries %>% 
+  left_join(hbs, by = c("HBR" = "HB"))
+
+df
+
+```
+
+
+```{r}
+#Overview of the combined data
+
+glimpse(df)
+```
+```{r}
+#Selecting the required columns and creating a new dataframe
+
+new.df <- select(df, FinancialYear, HBR, AgeGroup,Sex,InjuryType,NumberOfAdmissions,HBName)
+
+new.df
+
+#we are left with 7 relevant columns.
+
+```
+
+##Question that need to be answered:
+
+*Across Scotland, what are the most and least common unintentional injuries for young people aged 5-14 in 2013/14 and 2022/23 to be admitted to the emergency hospital for? Did the rate of these injuries change between time periods?**
+
+##Filtering the data
+
+To answer the above question we shall require the below:
+
+###Financial Year - 2013/14 and 2022/23 
+###HBR - this code represent both the health boards and country - we shall have to eliminate the country code and remain only with health board codes. This is to eliminate duplication as all health boards fall under the country code.
+###Age - 5-14
+###Injury types - this will enable us identify the most & least common injuries.
+###Number of admissions - to check the number of injuries for the above injuries.
+
+```{r}
+#Displaying unique values for relevant columns
+
+unique(new.df$AgeGroup) #Selected "5-9 years" & "10-14 years"
+unique(new.df$FinancialYear) #Selected only "2013/14" & "2022/23"
+unique(new.df$HBR) #Removed "S92000003" which represent the whole of Scotland
+unique(new.df$InjuryType) #Removed All Diagnoses and Other.
+unique(new.df$Sex) #Removed entries with All
+
+```
+
+```{r}
+#Filtering the data and saving it into a new data frame.
+
+
+cleaned.df <- new.df %>% filter( FinancialYear %in% c("2013/14","2022/23") &
+                   AgeGroup %in% c("5-9 years","10-14 years") & !HBR == "S92000003" &
+                   !InjuryType %in% c("All Diagnoses","Other","other","other ") &
+                   !Sex == 'All'
+            
+                 ) 
+cleaned.df
+```
+
+```{r}
+#Summarizing the filtered data to answer our question.
+
+result <- cleaned.df %>% group_by(FinancialYear,InjuryType) %>% summarise('Admissions' = sum(NumberOfAdmissions))
+
+result
+
+```
+
+```{r}
+#Sorting the data
+
+arrange(result,desc(Admissions))
+
+```
+
+##Question that need to be answered:
+
+*Across Scotland, what are the most and least common unintentional injuries for young people aged 5-14 in 2013/14 and 2022/23 to be admitted to the emergency hospital for? Did the rate of these injuries change between time periods?**
+
+##From the above results, Falls happen to be the most common injury in both years.
+##The rate of falls has reduced from 4588 in 2013/14 to 2730 in 2022/23. If we include Falling, the number of falls in 2022/23 increases to 3154.
+#Taking Poisoning/poisoned to mean the same thing and also scalds and scalded, it is clear the least common injury for both years was Scalds.
+#For Scalds the rate increased from 76 in 2013/14 to 108 in 2022/23.
+
+
+
+
+
+
+
